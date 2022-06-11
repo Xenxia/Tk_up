@@ -1,0 +1,25 @@
+from tk_up.widgets import Frame_up
+from tk_up.managerWidgets import ManagerWidgets_up
+
+class TEMPLATE_NAME_WIDGET(Frame_up):
+
+    # DONT REMOVE THIS
+    parameters_list: list
+    parameters_dict: dict
+    manager_class: ManagerWidgets_up
+
+    def __init__(self, parameters_list: list, parameters_dict: dict, manager_class: ManagerWidgets_up, master, **kw):
+        self.parameters_list = parameters_list.copy()
+        self.parameters_dict = parameters_dict.copy()
+        self.manager_class = manager_class
+
+        # Use 'self' in your widget
+        Frame_up.__init__(self, master=master, **kw)
+
+    # this function is call if you hide widget
+    def disable(self):
+        pass
+
+     # this function is call if you show class
+    def enable(self):
+        pass
