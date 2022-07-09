@@ -1,5 +1,4 @@
 import importlib, os, pathlib, sys
-from site import execsitecustomize
 from genericpath import exists
 from typing import Any, Tuple
 

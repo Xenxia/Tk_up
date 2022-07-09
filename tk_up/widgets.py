@@ -1,7 +1,7 @@
 import platform, re as regex
 from tkinter import Canvas, Grid, IntVar, Misc, Pack, Place, StringVar, Text, Tk, Toplevel, ttk
 import tkinter
-from typing import Any, Literal, Tuple, Type
+from typing import Any, Literal, Tuple
 from tkinter.constants import BOTH, BOTTOM, DISABLED, END, HORIZONTAL, LEFT, NO, NORMAL, RIGHT, VERTICAL, W, X, Y, YES
 
 PLATFORM_SYS = platform.system()
@@ -600,6 +600,48 @@ class Treeview_up(ttk.Frame, Widget_up):
     def bind(self, sequence:str|None= None, func=None, add:bool|Literal['', '+']|None=None) -> None:
         self.tree.bind(sequence=sequence, func=func, add=add)
 
+    def setTag(self, nameTag:str, bg:str=None, fg:str=None, image:str=None, font:str=None):
+        self.setTags(({
+            "name": nameTag,
+            "bg": bg,
+            "fg": fg,
+            "image": image,
+            "font": font,
+            }))
+
+    def setTags(self, tags: Tuple[dict]):
+
+        for tag in tags:
+
+            try:
+                name = tag["name"]
+            except:
+                return
+
+            try:
+                bg = tag["bg"]
+                self.tree.tag_configure(tagname=name, background=bg)
+            except:
+                pass
+            
+            try:
+                fg = tag["fg"]
+                self.tree.tag_configure(tagname=name, foreground=fg)
+            except:
+                pass
+
+            try:
+                image = tag["image"]
+                self.tree.tag_configure(tagname=name, image=image)
+            except:
+                pass
+
+            try:
+                font = tag["font"]
+                self.tree.tag_configure(tagname=name, font=font)
+            except:
+                pass
+
     def addElements(self, data:dict=None) -> bool:
 
         temp: dict = {}
@@ -691,9 +733,9 @@ class Treeview_up(ttk.Frame, Widget_up):
             return error
         return True
 
-    def removeOneElement(self):
-        item = self.tree.selection()[0]
-        self.tree.delete(item)
+    # def removeOneElement(self):
+    #     item = self.tree.selection()[0]
+    #     self.tree.delete(item)
 
     def removeAllElement(self):
         for record in self.tree.get_children():
