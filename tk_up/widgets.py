@@ -398,19 +398,32 @@ class Widget_up(ttk.Widget):
 
 class Toplevel_up(Toplevel, ttk.Frame):
 
-    __disableTitleBar: bool
-
-    # Component
-    __titleBar: ttk.Frame
     top: Toplevel
+    # Size screen
+    rootHeigth: int
+    rootWidth: int
 
-    def __init__(self, master=None, disableTitleBar:bool=False, cnf={}, **kw):
+    def __init__(self, master=None, cnf={}, **kw):
 
-        self.__disableTitleBar = disableTitleBar
-
-        
         Toplevel.__init__(self, master=master, cnf=cnf, **kw)
+        self.rootWidth = self.winfo_screenwidth()
+        self.rootHeigth = self.winfo_screenheight()
         self.protocol("WM_DELETE_WINDOW", self.hide)
+
+    def configWindows(self, title:str="Tk_Up", geometry:str="500x500", iconbitmap:str=None):
+
+        if regex.findall(r"\+center", geometry) != []:
+            gSizeW, gSizeH = geometry.split("+", 1)[0].split("x", 1)
+            rootH = round((self.rootHeigth/2)-(int(gSizeH)/2))
+            rootW = round((self.rootWidth/2)-(int(gSizeW)/2))
+            geometry = f'{gSizeW}x{gSizeH}+{rootW}+{rootH}'
+
+        self.title(title)
+        self.geometry(geometry)
+        if iconbitmap is not None:
+            self.iconbitmap(iconbitmap)
+
+        return self
 
     def show(self):
         self.update()
@@ -434,7 +447,7 @@ class Button_up(ttk.Button, Widget_up):
 class Toggle_Button_up(Button_up):
 
     text: Tuple = ("ON", "OFF")
-    color: Tuple = ("#00FF00", "#FF0000")
+    style: Tuple = None
     status: bool
 
     def __init__(self, master=None, **kw):
@@ -449,16 +462,16 @@ class Toggle_Button_up(Button_up):
     def reload(self):
         if self.status:
             self.config(text=self.text[0])
-            # self.config(fg=self.color[0])
+            if self.style is not None: self.config(style=self.style[0])
             self.status = True
         else:
             self.config(text=self.text[1])
-            # self.config(fg=self.color[1])
+            if self.style is not None: self.config(style=self.style[1])
             self.status = False
 
-    def custom_toggle(self, text: Tuple = None, color: Tuple = None):
+    def custom_toggle(self, text: Tuple = None, style: Tuple = None):
         if text is not None: self.text = text
-        if color is not None: self.color = color
+        if style is not None: self.style = style
         self.reload()
 
     def set_default_status(self, status: bool):
@@ -472,12 +485,31 @@ class Toggle_Button_up(Button_up):
     
         if self.config('text')[-1] == self.text[0]:
             self.config(text=self.text[1])
-            # self.config(fg=self.color[1])
+            if self.style is not None: self.config(style=self.style[1])
             self.status = False
         else:
             self.config(text=self.text[0])
-            # self.config(fg=self.color[0])
+            if self.style is not None: self.config(style=self.style[0])
             self.status = True
+
+class Checkbutton_up(ttk.Checkbutton, Widget_up):
+
+    variable: StringVar
+
+    def __init__(self, master=None, **kw):
+        self.variable = StringVar()
+
+        ttk.Checkbutton.__init__(self, master=master, variable=self.variable, onvalue=1, offvalue=0, **kw)
+        Widget_up.__init__(self)
+
+    def disable(self):
+        self['state'] = DISABLED
+
+    def enable(self):
+        self['state'] = NORMAL
+
+    def get(self):
+        return self.variable
 
 class Label_up(ttk.Label, Widget_up):
 
@@ -535,7 +567,7 @@ class Treeview_up(ttk.Frame, Widget_up):
     scroll_y: ttk.Scrollbar
     scroll_x: ttk.Scrollbar
 
-    def __init__(self, master=None, scroll:str=None, iid:bool=False, child:bool=False, show="tree", **kw):
+    def __init__(self, master=None, scroll:str=None, iid:bool=False, child:bool=False, show="tree", selectmode="browse", indent=10, **kw):
 
         ttk.Frame.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
@@ -548,8 +580,8 @@ class Treeview_up(ttk.Frame, Widget_up):
         self.tree = ttk.Treeview(
             master=self,
             show=show,
-            selectmode="browse",
-            height=(kw["height"] if "height" in kw else None)
+            selectmode=selectmode,
+            height=(kw["height"] if "height" in kw else None),
         )
 
         if scroll != None:
@@ -576,7 +608,7 @@ class Treeview_up(ttk.Frame, Widget_up):
                 self.tree.configure(xscrollcommand=self.scroll_x.set)
                 self.tree.configure(yscrollcommand=self.scroll_y.set)
 
-        self.tree.pack(fill=BOTH, expand=True)
+        self.tree.pack(fill="x", expand=True)
 
         self.tree['columns'] = ("empty")
 
@@ -806,13 +838,27 @@ class Treeview_up(ttk.Frame, Widget_up):
     def getItem(self, iid: str) -> tuple | str:
         return self.tree.item(iid)
 
-    def setColumns(self, columns: list[str], size: list[int] = None) -> None:
+    def setColumns(self, columns: list[str], anchor: list[str] = None, stretch: list[bool] = None, minSize: list[int] = None, size: list[int] = None) -> None:
 
         if self.__child:
+
+            if size is not None and len(columns) == len(size):
+                self.tree.column("#0", width=size.pop(0))
+
+            if minSize is not None and len(columns) == len(minSize):
+                self.tree.column("#0", minwidth=minSize.pop(0))
+
+            if anchor is not None and len(columns) == len(anchor):
+                self.tree.column("#0", anchor=anchor.pop(0))
+
+            if stretch is not None and len(columns) == len(stretch):
+                self.tree.column("#0", stretch=stretch.pop(0))
+            else:
+                self.tree.column("#0", stretch=NO)
+
             firstColumn = columns.pop(0)
-            firstColumnSize = size.pop(0)
+
             self.tree['columns'] = columns
-            self.tree.column("#0", width=firstColumnSize, stretch=NO)
             self.tree.heading("#0", text=firstColumn)
         else:
             self.tree['columns'] = columns
@@ -822,16 +868,28 @@ class Treeview_up(ttk.Frame, Widget_up):
         end = columns[-1]
 
         for index, col in enumerate(columns):
-            width = 100
-            stch = NO
 
             if size is not None and len(columns) == len(size):
-                width = size[index]
+                self.tree.column(col, width=size[index])
+            else:
+                self.tree.column(col, width=100)
 
-            if end == col:
-                stch = YES
+            if minSize is not None and len(columns) == len(minSize):
+                self.tree.column(col, minwidth=minSize[index])
 
-            self.tree.column(col, anchor=W, width=width, stretch=stch)
+            if anchor is not None and len(columns) == len(anchor):
+                self.tree.column(col, anchor=anchor[index])
+            # else:
+            #     self.tree.column(col, anchor="center")
+
+            if stretch is not None and len(columns) == len(stretch):
+                self.tree.column(col, stretch=stretch[index])
+
+            if end == col and stretch is None:
+                self.tree.column(col, stretch=YES)
+            elif stretch is None:
+                self.tree.column(col, stretch=NO)
+
             self.tree.heading(col, text=col)
 
     def moveUpSelectedElement(self) -> None:
@@ -882,5 +940,12 @@ class OptionMenu_up(ttk.Combobox, Widget_up):
             type_var = IntVar()
 
         ttk.Combobox.__init__(self, master, values=list ,textvariable=type_var, state="readonly", **kw)
+        Widget_up.__init__(self)
+
+class Separator_up(ttk.Separator, Widget_up):
+
+    def __init__(self, master=None, cursor=None, name:str=None, orient:Literal["horizontal", "vertical"]="horizontal", style:str=None, takefocus=None) -> None:
+
+        ttk.Separator.__init__(self, master=master, cursor=cursor, name=name, orient=orient, style=style, takefocus=takefocus)
         Widget_up.__init__(self)
 
