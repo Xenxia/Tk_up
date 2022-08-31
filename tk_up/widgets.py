@@ -3,6 +3,7 @@ from tkinter import Canvas, Grid, IntVar, Misc, Pack, Place, StringVar, Text, Tk
 import tkinter
 from typing import Any, Literal, Tuple
 from tkinter.constants import BOTH, BOTTOM, DISABLED, END, HORIZONTAL, LEFT, NO, NORMAL, RIGHT, VERTICAL, W, X, Y, YES
+from PIL import Image, ImageTk, ImageColor
 
 PLATFORM_SYS = platform.system()
 
@@ -559,6 +560,13 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
     def clearTerminal(self) -> None:
         self.delete("1.0","end")
 
+class Canvas_up(Canvas, Widget_up):
+
+    def __init__(self, master=None, cnf={}, **kw) -> None:
+
+        Canvas.__init__(self, master=master, cnf=cnf, **kw)
+        Widget_up.__init__(self)
+
 class Treeview_up(ttk.Frame, Widget_up):
     __count: int = 10
     __iid: bool
@@ -908,6 +916,39 @@ class Frame_up(ttk.Frame, Widget_up):
         ttk.Frame.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
 
+class Frame_alphaBg_up(Canvas_up):
+
+    # color 
+    alpha: int
+    color: Tuple[int]
+
+    def __init__(self, master=None, width=200, height=200, cnf={}, **kw) -> None:
+
+        if "alpha" in kw: 
+            self.alpha = int(kw.pop('alpha')*255)
+        else: 
+            self.alpha = 255
+
+        if "color" in kw: 
+            self.color = ImageColor.getcolor(kw.pop('color'), "RGB")
+        else:
+            self.color = (255, 255, 255)
+
+        self.img = []
+
+        i=Image.new('RGBA', (width, height), self.color + (self.alpha,))
+
+        self.img.append(ImageTk.PhotoImage(i))
+
+        Canvas.__init__(self, master=master, width=width, height=height, cnf=cnf, **kw)
+        self.config(highlightthickness=0)
+        self.create_image(0, 0, image=self.img[-1])
+
+
+    def addWidget(self, widget, x, y):
+        self.create_window(x, y, widget)
+        return self
+
 class LabelFrame_up(ttk.Labelframe, Widget_up):
 
     def __init__(self, master=None, **kw):
@@ -918,14 +959,6 @@ class Entry_up(ttk.Entry, Widget_up):
 
     def __init__(self, master=None, **kw):
         ttk.Entry.__init__(self, master=master, **kw)
-        Widget_up.__init__(self)
-
-class Canvas_up(Canvas, Widget_up):
-
-
-    def __init__(self, master=None, cnf={}, **kw) -> None:
-
-        Canvas.__init__(self, master=master, cnf=cnf, **kw)
         Widget_up.__init__(self)
 
 class OptionMenu_up(ttk.Combobox, Widget_up):
