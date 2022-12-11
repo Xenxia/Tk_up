@@ -962,6 +962,10 @@ class Entry_up(ttk.Entry, Widget_up):
         ttk.Entry.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
 
+    def clear(self):
+        self.delete(0, END)
+        return self
+
 class OptionMenu_up(ttk.Combobox, Widget_up):
 
     def __init__(self, master=None, style=None, type: str="str", default: int=None, list: Tuple | list=None, **kw) -> None:
