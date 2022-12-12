@@ -17,6 +17,9 @@ Tbox = Terminal_ScrolledText_up(root, width=40, height=10)
 Tbox.pack()
 
 Tbox.printLastLine("test")
+Tbox.printLastLine("test")
+Tbox.printLastLine("test")
+Tbox.printLastLine("test")
 
 
 # Tbox.write("write\n")
@@ -24,6 +27,8 @@ Tbox.printLastLine("test")
 
 
 
-Button(root, text="delete", command=lambda: Thread(target=delete_text).start()).pack()
+Button(root, text="test", command=lambda: Thread(target=delete_text).start()).pack()
+Button(root, text="delete", command=lambda: Tbox.delete("insert wordstart", "end")).pack()
+Button(root, text="insert", command=lambda: Tbox.printLastLine("test")).pack()
 
 root.mainloop()

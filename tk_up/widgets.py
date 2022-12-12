@@ -565,7 +565,8 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
         for index, text in enumerate(texts):
             self.insert(END, text, color[index])
 
-        self.lastIndex = self.index("end")
+        self.lastIndex = self.index("insert linestart")
+        self.lastInfo = ""
 
         self.see(END)
 
@@ -582,22 +583,22 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
 
             self.insert(END, text, color[index])
         
-        self.lastIndex = self.index("end")
+        self.lastIndex = self.index("insert linestart")
+        self.lastInfo = ""
 
         self.see(END)
 
     def printSameLine(self, id: str, *texts, color: list = None, newLine: bool = True):
 
-
         if color == None:
             color = ["Black"] * len(texts)
 
         if id != self.lastInfo:
-            self.insert(END, "11111", color[0])
-            self.lastIndex = self.index("end")
+            # self.insert(END, "\n", color[0])
+            self.lastIndex = self.index("insert linestart")
 
-
-        self.delete(self.lastIndex + "-2c linestart+0c", "end")
+        if id == self.lastInfo:
+            self.delete(self.lastIndex, "insert lineend")
 
         for index, text in enumerate(texts):
             if text == texts[-1]:
@@ -607,7 +608,7 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
 
             self.insert(END, text, color[index])
 
-        self.lastIndex = self.index("end")
+        # self.lastIndex = self.index("end")
         self.lastInfo = id
 
         self.see(END)
