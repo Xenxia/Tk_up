@@ -539,6 +539,13 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
         ScrolledText.__init__(self, master=master, cnf=cnf, **kw)
         Widget_up.__init__(self)
         self.bind("<Key>", lambda e: self.__ctrlEvent(e))
+        self.lastIndex = "1.0"
+        self.lastInfo = None
+
+        self.configTag({
+            "Black": ["", "#000000"],
+            "White": ["", "#FFFFFF"]
+        })
 
     def __ctrlEvent(self, event) -> None:
         if(12==event.state and event.keysym=='c' ):
@@ -550,12 +557,59 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
         for key, value in tag.items():
             self.tag_configure(key, background=value[0], foreground=value[1])
 
-    def printTerminal(self, *texts, color: list = None) -> None:
+    def printLastIndex(self, *texts, color: list = None) -> None:
+
+        if color == None:
+            color = ["Black"] * len(texts)
+
+        for index, text in enumerate(texts):
+            self.insert(END, text, color[index])
+
+        self.lastIndex = self.index("end")
+
+        self.see(END)
+
+    def printLastLine(self, *texts, color: list = None, newLine: bool = True) -> None:
+
+        if color == None:
+            color = ["Black"] * len(texts)
+
         for index, text in enumerate(texts):
             if text == texts[-1]:
-                self.insert(END, text+ "\n", color[index])
-            else:
-                self.insert(END, text, color[index])
+                if newLine:
+                    self.insert(END, text+"\n", color[index])
+                    break
+
+            self.insert(END, text, color[index])
+        
+        self.lastIndex = self.index("end")
+
+        self.see(END)
+
+    def printSameLine(self, id: str, *texts, color: list = None, newLine: bool = True):
+
+
+        if color == None:
+            color = ["Black"] * len(texts)
+
+        if id != self.lastInfo:
+            self.insert(END, "11111", color[0])
+            self.lastIndex = self.index("end")
+
+
+        self.delete(self.lastIndex + "-2c linestart+0c", "end")
+
+        for index, text in enumerate(texts):
+            if text == texts[-1]:
+                if newLine:
+                    self.insert(END, text+"\n", color[index])
+                    break
+
+            self.insert(END, text, color[index])
+
+        self.lastIndex = self.index("end")
+        self.lastInfo = id
+
         self.see(END)
 
     def clearTerminal(self) -> None:
