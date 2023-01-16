@@ -452,6 +452,8 @@ class Toggle_Button_up(Button_up):
     text: Tuple = ("ON", "OFF")
     style: Tuple = None
     status: bool
+    func1: Any
+    func2: Any
 
     def __init__(self, master=None, **kw):
         Button_up.__init__(self, master=master, **kw, command=self.toggle)
@@ -461,6 +463,16 @@ class Toggle_Button_up(Button_up):
         self.y = 0
         self.width = 0
         self.height = 0
+        self.func1 = self._
+        self.func2 = self._
+
+    def _(self):
+            pass
+
+    def set_toggle_function(self, func1, func2):
+
+        self.func1 = func1
+        self.func2 = func2
 
     def reload(self):
         if self.status:
@@ -484,13 +496,21 @@ class Toggle_Button_up(Button_up):
     def get_status(self) -> bool:
         return self.status
 
+    def set_status(self, status:bool, reload:bool = False):
+        self.status = status
+
+        if reload:
+            self.reload()
+
     def toggle(self):
     
-        if self.config('text')[-1] == self.text[0]:
+        if self.status:
+            self.func1()
             self.config(text=self.text[1])
             if self.style is not None: self.config(style=self.style[1])
             self.status = False
         else:
+            self.func2()
             self.config(text=self.text[0])
             if self.style is not None: self.config(style=self.style[0])
             self.status = True
@@ -589,26 +609,36 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up):
         if color == None:
             color = ["Black"] * len(texts)
 
-        if id in self.lineId_Index.keys() and self.lineId_Index[id][2] != 0:
-            self.delete(self.lineId_Index[id][0], self.lineId_Index[id][1])
+        texts = list(reversed(texts))
+        color = list(reversed(color))
 
-        if not id in self.lineId_Index.keys() or update_index:
-            self.lineId_Index[id] = [self.index("end linestart-1l"), self.index("end linestart"), 0]
+        try:
 
-        for index, text in enumerate(texts):
-            if text == texts[-1]:
-                if newLine:
-                    self.insert(self.lineId_Index[id][0], text+"\n", color[index])
-                    break
+            if id in self.lineId_Index.keys() and self.lineId_Index[id][2] != 0:
+                self.delete(self.lineId_Index[id][0], self.lineId_Index[id][1])
 
-            self.insert(self.lineId_Index[id][0], text, color[index])
+            if not id in self.lineId_Index.keys() or update_index:
+                sIndex = self.index("end linestart-1l")
+                self.lineId_Index[id] = [sIndex, self.index(sIndex+" lineend"), 0]
 
-        self.lineId_Index[id][2] += 1
+            for index, text in enumerate(texts):
 
-        if see_end:
-            self.see(END)
-        else:
-            self.see(self.lineId_Index[id][1])
+                    self.insert(self.lineId_Index[id][0], text, color[index])
+                    self.lineId_Index[id][1] = self.index(self.lineId_Index[id][0]+" lineend")
+
+            self.lineId_Index[id][1] = self.index(self.lineId_Index[id][0]+" lineend")
+
+            if newLine and self.lineId_Index[id][2] == 0:
+                self.insert(self.lineId_Index[id][1], "\n")
+
+            self.lineId_Index[id][2] += 1
+
+            if see_end:
+                self.see(END)
+            else:
+                self.see(self.lineId_Index[id][1])
+        except KeyError as e:
+            pass
 
         return self
 
@@ -712,11 +742,11 @@ class Treeview_up(ttk.Frame, Widget_up):
 
     def setTag(self, nameTag:str, bg:str=None, fg:str=None, image:str=None, font:str=None):
         self.setTags(({
-            "name": nameTag,
-            "bg": bg,
-            "fg": fg,
-            "image": image,
-            "font": font,
+                "name": nameTag,
+                "bg": bg,
+                "fg": fg,
+                "image": image,
+                "font": font,
             }))
 
     def setTags(self, tags: Tuple[dict]):
@@ -855,14 +885,40 @@ class Treeview_up(ttk.Frame, Widget_up):
         item = self.tree.selection()[0]
         self.tree.delete(item)
 
-    def editSelectedElement(self, text:str="", image="", values:list|Literal['']="", open:bool=False, tags:str|list[str]|tuple[str, ...]=""):
+    def editSelectedElement(self, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None):
         item = self.tree.focus()
-        self.tree.item(item, text=text, image=image, values=values, open=open, tags=tags)
+        if text != None:
+            self.tree.item(item, text=text)
+        
+        if image != None:
+            self.tree.item(item, image=image)
 
-    def editElement(self, item:str, text:str="", image="", values:list|Literal['']="", open:bool=False, tags:str|list[str]|tuple[str, ...]="") -> None:
-        self.tree.item(item, text=text, image=image, values=values, open=open, tags=tags)
+        if values != None:
+            self.tree.item(item, values=values)
 
-    def getItemSelectedElemnt(self, option:str='values') -> Any:
+        if open:
+            self.tree.item(item, open=open)
+
+        if tags != None:
+            self.tree.item(item, tags=tags)
+
+    def editElement(self, item:str, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
+        if text != None:
+            self.tree.item(item, text=text)
+        
+        if image != None:
+            self.tree.item(item, image=image)
+
+        if values != None:
+            self.tree.item(item, values=values)
+
+        if open:
+            self.tree.item(item, open=open)
+
+        if tags != None:
+            self.tree.item(item, tags=tags)
+
+    def getItemSelectedElemnt(self, option:str='values') -> Any | None:
         item = self.tree.focus()
 
         if self.__child and option == "values":
@@ -872,7 +928,12 @@ class Treeview_up(ttk.Frame, Widget_up):
                 listValues.append(value)
             return listValues
 
-        return self.tree.item(item, option)
+        result = self.tree.item(item, option)
+
+        if len(self.tree.item(item, option)) == 0:
+            result = None
+
+        return result
 
     def getSelectedElement(self) -> tuple:
         return self.tree.selection()
