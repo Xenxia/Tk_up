@@ -3,8 +3,6 @@ from genericpath import exists
 import os, pathlib, sys, tkinter
 from tkinter import Tk, ttk
 
-from widgets import Tk_up
-
 
 class ManagerThemes():
 
@@ -14,7 +12,7 @@ class ManagerThemes():
     use_theme: str
     style: ttk.Style
 
-    def __init__(self, master: Tk_up, themes_folder="themes") -> None:
+    def __init__(self, master: Tk, themes_folder="themes") -> None:
         self.master = master
         self.style = ttk.Style()
 

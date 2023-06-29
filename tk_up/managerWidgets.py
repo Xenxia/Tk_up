@@ -3,10 +3,11 @@ from genericpath import exists
 from typing import Any, Tuple
 
 from tk_up.widgets import Frame_up
+from tk_up.interface import ManagedFrame
 
 class ManagerWidgets_up(Frame_up):
 
-    class_widget: dict = {}
+    class_widget: dict[str, ManagedFrame] = {}
 
     def __init__(self, parameters_list: list = [], parameters_dict: dict = {}, asset_folder = "./page", master=None, **kw) -> None:
 
@@ -30,19 +31,20 @@ class ManagerWidgets_up(Frame_up):
 
     def showWidget(self, name_w: str):
 
-        for name, class_ in self.class_widget.items():
-            if name != name_w:
-                class_.hide()
-                try:
-                    class_.disable()
-                except:
-                    pass
-            else:
-                class_.show()
-                try:
-                    class_.enable()
-                except:
-                    pass
+        if name_w in self.class_widget.keys():
+            for name, class_ in self.class_widget.items():
+                if name != name_w:
+                    class_.hide()
+                    try:
+                        class_.disable()
+                    except:
+                        pass
+                else:
+                    class_.show()
+                    try:
+                        class_.enable()
+                    except:
+                        pass
 
     def hideAll(self):
         for _, class_ in self.class_widget.items():
@@ -60,7 +62,7 @@ class ManagerWidgets_up(Frame_up):
             except:
                 pass
 
-    def getClassWidget(self, name_w: str) -> Any:
+    def getClassWidget(self, name_w: str) -> ManagedFrame:
         return self.class_widget[name_w]
 
     def getAllClassWidget(self) -> dict:
