@@ -9,7 +9,7 @@ class ManagerWidgets_up(Frame_up):
 
     class_widget: dict[str, ManagedFrame] = {}
 
-    def __init__(self, parameters_list: list = [], parameters_dict: dict = {}, asset_folder = "./page", master=None, **kw) -> None:
+    def __init__(self, context: dict[str, Any] = {}, asset_folder = "./page", master=None, **kw) -> None:
 
         Frame_up.__init__(self, master=master, width=kw["width"], height=kw["height"])
 
@@ -23,13 +23,13 @@ class ManagerWidgets_up(Frame_up):
                 file_without_extension = os.path.splitext(os.path.basename(file))[0]
                 #import page
                 import_page = importlib.import_module(str(file_without_extension))
-                #load class and give parameter
-                class_p = import_page.__getattribute__(file_without_extension)(parameters_list=parameters_list, parameters_dict = parameters_dict, manager_class=self, master=self, kw=kw)
+                #load class and give context
+                class_p = import_page.__getattribute__(file_without_extension)(context = context, manager_class=self, master=self, kw=kw)
                 class_p.hide()
 
                 self.class_widget[file_without_extension] = class_p
 
-    def showWidget(self, name_w: str):
+    def showWidget(self, name_w: str) -> None:
 
         if name_w in self.class_widget.keys():
             for name, class_ in self.class_widget.items():
@@ -46,7 +46,7 @@ class ManagerWidgets_up(Frame_up):
                     except:
                         pass
 
-    def hideAll(self):
+    def hideAll(self) -> None:
         for _, class_ in self.class_widget.items():
             class_.hide()
             try:
@@ -54,7 +54,7 @@ class ManagerWidgets_up(Frame_up):
             except:
                 pass
 
-    def showAll(self):
+    def showAll(self) -> None:
         for _, class_ in self.class_widget.items():
             class_.show()
             try:
@@ -65,31 +65,19 @@ class ManagerWidgets_up(Frame_up):
     def getClassWidget(self, name_w: str) -> ManagedFrame:
         return self.class_widget[name_w]
 
-    def getAllClassWidget(self) -> dict:
+    def getAllClassWidget(self) -> dict[str, ManagedFrame]:
         return self.class_widget
 
-    def addParametersInOneWidget(self, name_w:str, parameter_dict: Tuple[str, Any] = None, parameter_list: Any = None, index: int = None):
+    def addInContextInOneWidget(self, name_w:str, addCtx: Tuple[str, Any] = None):
 
         try:
-            p_l: list = self.class_widget[name_w].parameters_list
-            parLCheck = True
+            ctx: list = self.class_widget[name_w].context
+            contextCheck = True
         except:
-            parLCheck = False
+            contextCheck = False
 
-        try:
-            p_d: dict = self.class_widget[name_w].parameters_dict
-            parDCheck = True
-        except:
-            parDCheck = False
+        if addCtx is not None and contextCheck:
+            ctx[addCtx[0]] = addCtx[1]
 
-        if parameter_list is not None and parLCheck:
-            if index == None:
-                p_l.append(parameter_list)
-            else:
-                p_l[index] = parameter_list
-
-        if parameter_dict is not None and parDCheck:
-            p_d[parameter_dict[0]] = parameter_dict[1]
-
-    def addParametersInAllWidget(self):
+    def addInContextInAllWidget(self):
         pass

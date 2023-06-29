@@ -1,16 +1,16 @@
+from typing import Any
+
 from tk_up.widgets import Frame_up
 from tk_up.managerWidgets import ManagerWidgets_up
 
 class TEMPLATE_NAME_WIDGET(Frame_up):
 
     # DONT REMOVE THIS
-    parameters_list: list
-    parameters_dict: dict
+    ctx: dict[str, Any]
     manager_class: ManagerWidgets_up
 
-    def __init__(self, parameters_list: list, parameters_dict: dict, manager_class: ManagerWidgets_up, master, kw={"width":0, "height":0}):
-        self.parameters_list = parameters_list.copy()
-        self.parameters_dict = parameters_dict.copy()
+    def __init__(self, context: dict, manager_class: ManagerWidgets_up, master, kw={"width":0, "height":0}):
+        self.ctx = context.copy()
         self.manager_class = manager_class
 
         # Use 'self' in your widget
