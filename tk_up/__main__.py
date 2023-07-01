@@ -36,7 +36,7 @@ if cli_args.C == None:
     sys.exit("\nOne argument expected")
 
 path_exe = os.getcwd()
-path_tempalte = f"{os.path.dirname(os.path.realpath(__file__))}/template.tmpl"
+path_tempalte = f"{os.path.dirname(os.path.realpath(__file__))}/template.py"
 
 def init_project():
     pass

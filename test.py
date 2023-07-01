@@ -1,6 +1,7 @@
 from tkinter import *
 
-from tk_up.widgets import Terminal_ScrolledText_up
+from tk_up.widgets.text import Terminal_ScrolledText_up
+from tk_up.widgets.button import Checkbutton_up
 from threading import Thread
 from time import sleep
 
@@ -39,5 +40,6 @@ Button(root, text="test2", command=lambda: Thread(target=delete_text2).start()).
 Button(root, text="delete", command=lambda: Tbox.delete("2.0", "3.0")).pack()
 Button(root, text="insert", command=lambda: Tbox.printLastLine("test")).pack()
 Button(root, text="index", command=lambda: print(Tbox.index("end linestart"))).pack()
+Checkbutton_up(root).pack()
 
 root.mainloop()

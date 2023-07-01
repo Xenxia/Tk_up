@@ -2,7 +2,7 @@ import importlib, os, pathlib, sys
 from genericpath import exists
 from typing import Any, Tuple
 
-from tk_up.widgets import Frame_up
+from tk_up.widgets.frame import Frame_up
 from tk_up.interface import ManagedFrame
 
 class ManagerWidgets_up(Frame_up):
@@ -68,16 +68,17 @@ class ManagerWidgets_up(Frame_up):
     def getAllClassWidget(self) -> dict[str, ManagedFrame]:
         return self.class_widget
 
-    def addInContextInOneWidget(self, name_w:str, addCtx: Tuple[str, Any] = None):
+    def addInContextInOneWidget(self, name_w:str, addCtx: Tuple[str, Any] = None) -> bool:
 
         try:
-            ctx: list = self.class_widget[name_w].context
-            contextCheck = True
+            ctx: list = self.class_widget[name_w].ctx
         except:
-            contextCheck = False
+            return False
 
-        if addCtx is not None and contextCheck:
+        if addCtx is not None:
             ctx[addCtx[0]] = addCtx[1]
+
+        return True
 
     def addInContextInAllWidget(self):
         pass
