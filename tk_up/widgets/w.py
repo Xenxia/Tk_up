@@ -212,3 +212,6 @@ class UpdateWidget(ttk.Widget):
 
     def addFuncUpdate(self, func: FuncsUpdate):
         self.updateFunc = func
+
+    def updateRoot(self):
+        self.rootWidget.update()

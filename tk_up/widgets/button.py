@@ -4,44 +4,29 @@ from tkinter.constants import DISABLED, NORMAL
 from typing import Any, Tuple
 from PIL import Image, ImageTk
 
-from tk_up.types import Text
 from tk_up.widgets.w import Widget_up, UpdateWidget
+from tk_up.types import ImageToggle
 
 class Button_up(ttk.Button, Widget_up, UpdateWidget):
 
-    def __init__(self, master=None, text: Text="", image: str=None, **kw):
+    def __init__(self, master=None, image: str=None, size: tuple[int, int] = (12,12), **kw):
 
         self.i = None
 
         if image is not None:
             temp = Image.open(image)
-            self.i = ImageTk.PhotoImage(temp)
+            temp = temp.resize(size, Image.LANCZOS)
+            self.i = ImageTk.PhotoImage(temp, size=size)
 
         ttk.Button.__init__(self, master=master, image=self.i, **kw)
         Widget_up.__init__(self)
         UpdateWidget.__init__(self)
-
-        self.textDynamic = False
-
-        if isinstance(text, tuple):
-            self.textDynamic = True
-            self.textCall = text
-            t = text[0](*text[1])
-            self.configure(text=t)
-            
-        elif isinstance(text, str):
-            self.configure(text=text)
 
     def disable(self):
         self['state'] = DISABLED
 
     def enable(self):
         self['state'] = NORMAL
-
-    def __update(self, event) -> None:
-        if self.textDynamic:
-            self.configure(text=f"{self.textCall[0](*self.textCall[1])}")
-            self.update()
 
 class Toggle_Button_up(Button_up):
 
@@ -50,17 +35,22 @@ class Toggle_Button_up(Button_up):
     status: bool
     func1: Any
     func2: Any
+    image1: ImageTk.PhotoImage
+    image2: ImageTk.PhotoImage
 
     def __init__(self, master=None, **kw):
         Button_up.__init__(self, master=master, **kw, command=self.toggle)
         self.status = True
-        self.reload()
         self.x = 0
         self.y = 0
         self.width = 0
         self.height = 0
         self.func1 = self.__
         self.func2 = self.__
+        self.image1 = None
+        self.image2 = None
+        self.text = None
+        self.reload()
 
     def __(self):
         pass
@@ -72,17 +62,30 @@ class Toggle_Button_up(Button_up):
 
     def reload(self):
         if self.status:
-            self.config(text=self.text[0])
+            if self.text is not None: self.config(text=self.text[0])
             if self.style is not None: self.config(style=self.style[0])
+            if self.image1 is not None: self["image"] = self.image1
             self.status = True
         else:
-            self.config(text=self.text[1])
+            if self.text is not None: self.config(text=self.text[1])
             if self.style is not None: self.config(style=self.style[1])
+            if self.image2 is not None: self["image"] = self.image2
             self.status = False
 
-    def custom_toggle(self, text: Tuple = None, style: Tuple = None):
+        self.update()
+
+    def custom_toggle(self, text: Tuple = None, style: Tuple = None, image: ImageToggle = None):
         if text is not None: self.text = text
         if style is not None: self.style = style
+        if image is not None:
+            temp = Image.open(image[0][0])
+            temp = temp.resize(image[0][1], Image.LANCZOS)
+            self.image1 = ImageTk.PhotoImage(temp, size=image[0][1])
+
+            temp = Image.open(image[1][0])
+            temp = temp.resize(image[1][1], Image.LANCZOS)
+            self.image2 = ImageTk.PhotoImage(temp, size=image[1][1])
+
         self.reload()
 
     def set_default_status(self, status: bool):
@@ -102,14 +105,18 @@ class Toggle_Button_up(Button_up):
     
         if self.status:
             self.func1()
-            self.config(text=self.text[1])
+            if self.text is not None: self.config(text=self.text[1])
             if self.style is not None: self.config(style=self.style[1])
+            if self.image2 is not None: self["image"] = self.image2
             self.status = False
         else:
             self.func2()
-            self.config(text=self.text[0])
+            if self.text is not None: self.config(text=self.text[0])
             if self.style is not None: self.config(style=self.style[0])
+            if self.image1 is not None: self["image"] = self.image1
             self.status = True
+
+        self.update()
 
 class Checkbutton_up(ttk.Checkbutton, Widget_up, UpdateWidget):
 
