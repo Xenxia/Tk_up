@@ -1,7 +1,7 @@
 from tkinter import Text, ttk, Pack, Grid, Place
 from tkinter.constants import BOTH, END, LEFT, RIGHT, Y
 
-from tk_up.widgets.w import Widget_up
+from tk_up.widgets.w import Widget_up, UpdateWidget
 
 class ScrolledText(Text):
 
@@ -30,23 +30,27 @@ class ScrolledText(Text):
         return str(self.frame)
 
 
-class Text_up(Text, Widget_up):
+class Text_up(Text, Widget_up, UpdateWidget):
 
     def __init__(self, master=None, cnf={}, **kw):
         Text.__init__(self, master=master, cnf=cnf, **kw)
         Widget_up.__init__(self)
+        UpdateWidget.__init__(self)
 
-class ScrolledText_up(ScrolledText, Widget_up):
+class ScrolledText_up(ScrolledText, Widget_up, UpdateWidget):
 
     def __init__(self, master=None, cnf={}, **kw) -> None:
         ScrolledText.__init__(self, master=master, cnf=cnf, **kw)
         Widget_up.__init__(self)
+        UpdateWidget.__init__(self)
 
-class Terminal_ScrolledText_up(ScrolledText, Widget_up):
+class Terminal_ScrolledText_up(ScrolledText, Widget_up, UpdateWidget):
 
     def __init__(self, master=None, cnf={}, **kw):
         ScrolledText.__init__(self, master=master, cnf=cnf, **kw)
         Widget_up.__init__(self)
+        UpdateWidget.__init__(self)
+
         self.bind("<Key>", lambda e: self.__ctrlEvent(e))
         self.lastIndex: str = "1.0"
         self.lastId: str | None = None

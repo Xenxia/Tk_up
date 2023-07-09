@@ -1,12 +1,12 @@
 from copy import copy
 from tkinter import ttk
 
-from tk_up.widgets.w import Widget_up
+from tk_up.widgets.w import Widget_up, UpdateWidget
 from tk_up.widgets.frame import Frame_up
 
 
 
-class Tab_up(ttk.Notebook, Widget_up):
+class Tab_up(ttk.Notebook, Widget_up, UpdateWidget):
 
     tabs: dict[str, tuple[int, Frame_up]] = {}
     __num: int = 0
@@ -14,6 +14,7 @@ class Tab_up(ttk.Notebook, Widget_up):
     def __init__(self, master=None, cursor=None) -> None:
         ttk.Notebook.__init__(self, master=master, cursor=cursor)
         Widget_up.__init__(self)
+        UpdateWidget.__init__(self)
 
     def add_tab(self, name: str) -> Frame_up:
 

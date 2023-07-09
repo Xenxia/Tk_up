@@ -5,9 +5,9 @@ from typing import Any, Tuple
 from PIL import Image, ImageTk
 
 from tk_up.types import Text
-from tk_up.widgets.w import Widget_up
+from tk_up.widgets.w import Widget_up, UpdateWidget
 
-class Button_up(ttk.Button, Widget_up):
+class Button_up(ttk.Button, Widget_up, UpdateWidget):
 
     def __init__(self, master=None, text: Text="", image: str=None, **kw):
 
@@ -19,8 +19,7 @@ class Button_up(ttk.Button, Widget_up):
 
         ttk.Button.__init__(self, master=master, image=self.i, **kw)
         Widget_up.__init__(self)
-        self.bind("<<TK_UP.Update>>", self.__update, add="+")
-        self.nametowidget('.').bind("<<TK_UP.Update>>", self.__update, add="+")
+        UpdateWidget.__init__(self)
 
         self.textDynamic = False
 
@@ -112,7 +111,7 @@ class Toggle_Button_up(Button_up):
             if self.style is not None: self.config(style=self.style[0])
             self.status = True
 
-class Checkbutton_up(ttk.Checkbutton, Widget_up):
+class Checkbutton_up(ttk.Checkbutton, Widget_up, UpdateWidget):
 
     variable: StringVar
 
@@ -121,6 +120,7 @@ class Checkbutton_up(ttk.Checkbutton, Widget_up):
 
         ttk.Checkbutton.__init__(self, master=master, variable=self.variable, onvalue=1, offvalue=0, **kw)
         Widget_up.__init__(self)
+        UpdateWidget.__init__(self)
 
     def disable(self):
         self['state'] = DISABLED

@@ -1,5 +1,7 @@
 from tkinter import ttk, Misc
-from typing import Literal
+from typing import Literal, Callable, Any
+
+from tk_up.types import FuncsUpdate
 
 class Widget_up(ttk.Widget):
 
@@ -191,3 +193,22 @@ class Widget_up(ttk.Widget):
 
         return self
 
+class UpdateWidget(ttk.Widget):
+
+    def __init__(self, func: FuncsUpdate = []) -> None:
+        self.rootWidget: ttk.Widget = self.nametowidget('.')
+        self.rootWidget.bind("<<TK_UP.Update>>", self.__update, add="+")
+        self.bind("<<TK_UP.Update>>", self.__update, add="+")
+
+        self.updateFunc: FuncsUpdate = func
+
+    def __update(self, event):
+
+        if self.updateFunc.__len__() != 0:
+            for f in self.updateFunc:
+                f(self, event)
+
+        self.update()
+
+    def addFuncUpdate(self, func: FuncsUpdate):
+        self.updateFunc = func

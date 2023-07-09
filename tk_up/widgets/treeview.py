@@ -3,10 +3,10 @@ from typing import Any, Literal, Tuple
 from tkinter import ttk
 from tkinter.constants import BOTTOM, END, HORIZONTAL, NO, RIGHT, VERTICAL, X, Y, YES
 
-from tk_up.widgets.w import Widget_up
+from tk_up.widgets.w import Widget_up, UpdateWidget
 from tk_up.widgets import SCROLL_ALL, SCROLL_X, SCROLL_Y
 
-class Treeview_up(ttk.Frame, Widget_up):
+class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
     __count: int = 10
     __iid: bool
     __child: bool
@@ -30,6 +30,8 @@ class Treeview_up(ttk.Frame, Widget_up):
             selectmode=selectmode,
             height=(kw["height"] if "height" in kw else None),
         )
+
+        UpdateWidget.__init__(self)
 
         if scroll != None:
             self.scroll_y = ttk.Scrollbar(master=self, orient=VERTICAL)
@@ -75,9 +77,6 @@ class Treeview_up(ttk.Frame, Widget_up):
             children.append(child)
             children += self.__getSubChildren(tree, child)
         return children
-
-    def __update(self, event):
-        pass
 
     def bind(self, sequence:str|None= None, func=None, add:bool|Literal['', '+']|None=None) -> None:
         self.tree.bind(sequence=sequence, func=func, add=add)

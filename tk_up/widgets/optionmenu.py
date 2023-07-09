@@ -1,11 +1,11 @@
 from tkinter import ttk, StringVar, IntVar
 from typing import Tuple
 
-from tk_up.widgets.w import Widget_up
+from tk_up.widgets.w import Widget_up, UpdateWidget
 
 
 
-class OptionMenu_up(ttk.Combobox, Widget_up):
+class OptionMenu_up(ttk.Combobox, Widget_up, UpdateWidget):
 
     def __init__(self, master=None, style=None, type: str="str", default: int=None, list: Tuple | list=None, **kw) -> None:
 
@@ -18,3 +18,4 @@ class OptionMenu_up(ttk.Combobox, Widget_up):
 
         ttk.Combobox.__init__(self, master, values=list ,textvariable=type_var, state="readonly", **kw)
         Widget_up.__init__(self)
+        UpdateWidget.__init__(self)
