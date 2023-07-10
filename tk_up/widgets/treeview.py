@@ -259,22 +259,21 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         if tags != None:
             self.tree.item(item, tags=tags)
 
-    def getItemSelectedElemnt(self, option:str='values') -> Any | None:
+    def getItemSelectedElement(self, option:str='values') -> Any:
         item = self.tree.focus()
+
+        if len(self.tree.item(item, option)) == 0:
+            return (None,)
 
         if self.__child and option == "values":
             listValues: list = []
             listValues.append(self.tree.item(item, "text"))
             for value in self.tree.item(item, "values"):
                 listValues.append(value)
+
             return listValues
 
-        result = self.tree.item(item, option)
-
-        if len(self.tree.item(item, option)) == 0:
-            result = None
-
-        return result
+        return self.tree.item(item, option)
 
     def getSelectedElement(self) -> tuple:
         return self.tree.selection()
