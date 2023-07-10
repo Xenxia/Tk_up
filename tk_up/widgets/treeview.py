@@ -382,3 +382,5 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         for row in rows:
             self.tree.move(row, self.tree.parent(row), self.tree.index(row)+1)
 
+    def isSelect(self) -> bool:
+        return self.tree.selection().__len__() > 0

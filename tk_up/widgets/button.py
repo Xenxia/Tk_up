@@ -6,21 +6,38 @@ from PIL import Image, ImageTk
 
 from tk_up.widgets.w import Widget_up, UpdateWidget
 from tk_up.types import ImageToggle
+from tk_up.object.image import Wimage
 
 class Button_up(ttk.Button, Widget_up, UpdateWidget):
 
-    def __init__(self, master=None, image: str=None, size: tuple[int, int] = (12,12), **kw):
+    def __init__(self, master=None, images: list[Wimage]=None, image: Wimage=None, **kw):
 
-        self.i = None
-
-        if image is not None:
-            temp = Image.open(image)
-            temp = temp.resize(size, Image.LANCZOS)
-            self.i = ImageTk.PhotoImage(temp, size=size)
-
-        ttk.Button.__init__(self, master=master, image=self.i, **kw)
+        ttk.Button.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
         UpdateWidget.__init__(self)
+
+        self.images = [None]
+        self.image = None
+
+        if image is not None:
+            self.image = image
+            self.config(image=self.image.get())
+
+        if images is not None:
+            self.images = images
+            self.config(image=self.images[0].get())
+
+        self.update()
+
+
+    def set_image(self, name):
+
+        for i in self.images:
+            if i.name == name:
+                self.config(image=i.get())
+                break
+
+        self.update()
 
     def disable(self):
         self['state'] = DISABLED
