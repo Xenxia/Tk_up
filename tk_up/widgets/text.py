@@ -57,8 +57,12 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up, UpdateWidget):
         self.lineId_Index: dict[str, list[str, str, int]] = {}
 
         self.configTag({
-            "Black": ["", "#000000"],
-            "White": ["", "#FFFFFF"]
+            "Black": {
+                "background": "",
+                "foreground": "#000000"},
+            "White": {
+                "background": "",
+                "foreground": "#FFFFFF"},
         })
 
     def __ctrlEvent(self, event) -> None:
@@ -69,7 +73,7 @@ class Terminal_ScrolledText_up(ScrolledText, Widget_up, UpdateWidget):
 
     def configTag(self, tag: dict):
         for key, value in tag.items():
-            self.tag_configure(key, background=value[0], foreground=value[1])
+            self.tag_configure(key, cnf=value)
 
     def printLastIndex(self, *texts, color: list = None) -> None:
 
