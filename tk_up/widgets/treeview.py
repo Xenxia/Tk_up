@@ -14,7 +14,7 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
     scroll_y: ttk.Scrollbar
     scroll_x: ttk.Scrollbar
 
-    def __init__(self, master=None, scroll:str=None, iid:bool=False, child:bool=False, show="tree", selectmode="browse", indent=10, **kw):
+    def __init__(self, master=None, scroll:str=None, iid:bool=False, child:bool=False, show="tree", selectmode="browse", indent=10, resize_column=True, **kw):
 
         ttk.Frame.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
@@ -23,6 +23,8 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
 
         self.__child=child
         self.__iid=iid
+
+        self.resize_column = resize_column
 
         self.tree = ttk.Treeview(
             master=self,
@@ -61,6 +63,10 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
 
         self.tree['columns'] = ("empty")
 
+        
+        self.tree.bind('<Button-1>', self.__prevent_resize)
+        # self.tree.bind('<Motion>', self.__prevent_resize)
+
     def __popItem(self, dict:dict, position=0):
 
         key = list(dict.keys())[position]
@@ -77,6 +83,10 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
             children.append(child)
             children += self.__getSubChildren(tree, child)
         return children
+
+    def __prevent_resize(self, event):
+        if self.tree.identify_region(event.x, event.y) == "separator" and not self.resize_column:
+            return "break"
 
     def bind(self, sequence:str|None= None, func=None, add:bool|Literal['', '+']|None=None) -> None:
         self.tree.bind(sequence=sequence, func=func, add=add)
@@ -139,8 +149,6 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
             while len(data) != 0:
                 
                 child, data = self.__popItem(data)
-
-                print(child)
 
                 if child[1]["parent"] not in data:
                     
