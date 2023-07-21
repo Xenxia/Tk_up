@@ -3,18 +3,22 @@ from typing import Any, Literal, Tuple
 from tkinter import ttk
 from tkinter.constants import BOTTOM, END, HORIZONTAL, NO, RIGHT, VERTICAL, X, Y, YES
 
+from tk_up.widgets.entry import Entry_up
 from tk_up.widgets.w import Widget_up, UpdateWidget
 from tk_up.widgets import SCROLL_ALL, SCROLL_X, SCROLL_Y
 
 class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
-    __count: int = 10
+    __count: int = 0
     __iid: bool
     __child: bool
+    __editRow: bool
+    __resizeCol: bool
+    __column: list[str, int]
     tree: ttk.Treeview
     scroll_y: ttk.Scrollbar
     scroll_x: ttk.Scrollbar
 
-    def __init__(self, master=None, scroll:str=None, iid:bool=False, child:bool=False, show="tree", selectmode="browse", indent=10, resize_column=True, **kw):
+    def __init__(self, master=None, scroll:str=None, iid:bool=False, child:bool=False, show="tree", selectmode="browse", indent=10, resizeColumn=True, editRow=False, **kw):
 
         ttk.Frame.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
@@ -23,8 +27,8 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
 
         self.__child=child
         self.__iid=iid
-
-        self.resize_column = resize_column
+        self.__editRow=editRow
+        self.__resizeCol = resizeColumn
 
         self.tree = ttk.Treeview(
             master=self,
@@ -64,7 +68,9 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         self.tree['columns'] = ("empty")
 
         
-        self.tree.bind('<Button-1>', self.__prevent_resize)
+        self.tree.bind('<Button-1>', self.__prevent_resize, add="+")
+        self.tree.bind('<Button-1>', self.__updateRowColSelect, add="+")
+        self.tree.bind('<Double-Button-1>', self.__onDoubleclick, add="+")
         # self.tree.bind('<Motion>', self.__prevent_resize)
 
     def __popItem(self, dict:dict, position=0):
@@ -85,12 +91,39 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         return children
 
     def __prevent_resize(self, event):
-        if self.tree.identify_region(event.x, event.y) == "separator" and not self.resize_column:
+        if self.tree.identify_region(event.x, event.y) == "separator" and not self.__resizeCol:
             return "break"
+        
+    def __updateRowColSelect(self, event):
+            t = self.tree.identify_column(event.x)
+            self.__column = [t, int(t.replace("#", ""))]
+
+    def __onDoubleclick(self, event):
+
+        if self.__editRow:
+            self.__editPopup(event)
+
+    def __editPopup(self, event):
+        rowid = self.tree.identify_row(event.y)
+        column = self.tree.identify_column(event.x)
+
+        # get column position info
+        x,y,width,height = self.tree.bbox(rowid, column)
+
+        # y-axis offset
+        # pady = height // 2
+        pady = 0
+
+        # place Entry popup properly
+        text = self.getValueSelectedColRow()
+        self.entryPopup = _EntryPopup(self, rowid, text, self.__column[1])
+        self.entryPopup.place(x=x, y=y+pady, width=width, height=height)
 
     def bind(self, sequence:str|None= None, func=None, add:bool|Literal['', '+']|None=None) -> None:
         self.tree.bind(sequence=sequence, func=func, add=add)
 
+
+#======== Setter
     def setTag(self, nameTag:str, bg:str=None, fg:str=None, image:str=None, font:str=None):
         self.setTags(({
                 "name": nameTag,
@@ -133,6 +166,61 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
             except:
                 pass
 
+    def setColumns(self, columns: list[str], anchor: list[str] = None, stretch: list[bool] = None, minSize: list[int] = None, size: list[int] = None) -> None:
+
+        if self.__child:
+
+            if size is not None and len(columns) == len(size):
+                self.tree.column("#0", width=size.pop(0))
+
+            if minSize is not None and len(columns) == len(minSize):
+                self.tree.column("#0", minwidth=minSize.pop(0))
+
+            if anchor is not None and len(columns) == len(anchor):
+                self.tree.column("#0", anchor=anchor.pop(0))
+
+            if stretch is not None and len(columns) == len(stretch):
+                self.tree.column("#0", stretch=stretch.pop(0))
+            else:
+                self.tree.column("#0", stretch=NO)
+
+            firstColumn = columns.pop(0)
+
+            self.tree['columns'] = columns
+            self.tree.heading("#0", text=firstColumn)
+        else:
+            self.tree['columns'] = columns
+            self.tree.column("#0", width=0, stretch=NO)
+            self.tree.heading("#0", text="")
+
+        end = columns[-1]
+
+        for index, col in enumerate(columns):
+
+            if size is not None and len(columns) == len(size):
+                self.tree.column(col, width=size[index])
+            else:
+                self.tree.column(col, width=100)
+
+            if minSize is not None and len(columns) == len(minSize):
+                self.tree.column(col, minwidth=minSize[index])
+
+            if anchor is not None and len(columns) == len(anchor):
+                self.tree.column(col, anchor=anchor[index])
+            # else:
+            #     self.tree.column(col, anchor="center")
+
+            if stretch is not None and len(columns) == len(stretch):
+                self.tree.column(col, stretch=stretch[index])
+
+            if end == col and stretch is None:
+                self.tree.column(col, stretch=YES)
+            elif stretch is None:
+                self.tree.column(col, stretch=NO)
+
+            self.tree.heading(col, text=col)
+
+#======== Add
     def addElements(self, data:dict=None) -> bool:
 
         temp: dict = {}
@@ -226,6 +314,8 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
     #     item = self.tree.selection()[0]
     #     self.tree.delete(item)
 
+
+#======== Remove
     def removeAllElement(self):
         for record in self.tree.get_children():
             self.tree.delete(record)
@@ -234,6 +324,7 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         item = self.tree.selection()[0]
         self.tree.delete(item)
 
+#======== Edit
     def editSelectedElement(self, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None):
         item = self.tree.focus()
         if text != None:
@@ -251,7 +342,7 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         if tags != None:
             self.tree.item(item, tags=tags)
 
-    def editElement(self, item:str, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
+    def editValue(self, item:str, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
         if text != None:
             self.tree.item(item, text=text)
         
@@ -267,7 +358,35 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         if tags != None:
             self.tree.item(item, tags=tags)
 
-    def getItemSelectedElement(self, option:str='values') -> Any:
+    def editValueColRow(self, value: Any, column: int, rowId: str):
+
+        if self.__child:
+            if column == 0:
+                self.editValue(rowId, text=value)
+            else:
+                t = self.getItem(rowId)["values"]
+                
+                try:
+                    t[(column-1)] = value
+                except IndexError:
+                    t.append(value)
+
+                self.editValue(rowId, values=t)
+
+        else:
+            t: list = self.getItem(rowId)["values"]
+            if (column-1) == 0:
+                t[0] = value
+            else:
+                try:
+                    t[(column-1)] = value
+                except IndexError:
+                    t.append(value)
+            self.editValue(rowId, values=t)
+
+#======== Getter
+
+    def getItemSelectedRow(self, option:str='values') -> Any:
         item = self.tree.focus()
 
         if len(self.tree.item(item, option)) == 0:
@@ -283,7 +402,18 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
 
         return self.tree.item(item, option)
 
-    def getSelectedElement(self) -> tuple:
+    def getValueSelectedColRow(self, option: str = "values") -> Any:
+        columnId = self.__column[1]
+
+        if not self.__child: columnId = columnId-1
+
+        v = self.getItemSelectedRow(option=option)
+
+        for i, val in enumerate(v):
+            if i == columnId:
+                return val
+
+    def getSelectedRow(self) -> tuple:
         return self.tree.selection()
 
     def getAllChildren(self) -> dict:
@@ -322,63 +452,10 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
             iidParent = self.tree.parent(iidParent)
         return parentList
 
-    def getItem(self, iid: str) -> tuple | str:
+    def getItem(self, iid: str) -> dict:
         return self.tree.item(iid)
 
-    def setColumns(self, columns: list[str], anchor: list[str] = None, stretch: list[bool] = None, minSize: list[int] = None, size: list[int] = None) -> None:
-
-        if self.__child:
-
-            if size is not None and len(columns) == len(size):
-                self.tree.column("#0", width=size.pop(0))
-
-            if minSize is not None and len(columns) == len(minSize):
-                self.tree.column("#0", minwidth=minSize.pop(0))
-
-            if anchor is not None and len(columns) == len(anchor):
-                self.tree.column("#0", anchor=anchor.pop(0))
-
-            if stretch is not None and len(columns) == len(stretch):
-                self.tree.column("#0", stretch=stretch.pop(0))
-            else:
-                self.tree.column("#0", stretch=NO)
-
-            firstColumn = columns.pop(0)
-
-            self.tree['columns'] = columns
-            self.tree.heading("#0", text=firstColumn)
-        else:
-            self.tree['columns'] = columns
-            self.tree.column("#0", width=0, stretch=NO)
-            self.tree.heading("#0", text="")
-
-        end = columns[-1]
-
-        for index, col in enumerate(columns):
-
-            if size is not None and len(columns) == len(size):
-                self.tree.column(col, width=size[index])
-            else:
-                self.tree.column(col, width=100)
-
-            if minSize is not None and len(columns) == len(minSize):
-                self.tree.column(col, minwidth=minSize[index])
-
-            if anchor is not None and len(columns) == len(anchor):
-                self.tree.column(col, anchor=anchor[index])
-            # else:
-            #     self.tree.column(col, anchor="center")
-
-            if stretch is not None and len(columns) == len(stretch):
-                self.tree.column(col, stretch=stretch[index])
-
-            if end == col and stretch is None:
-                self.tree.column(col, stretch=YES)
-            elif stretch is None:
-                self.tree.column(col, stretch=NO)
-
-            self.tree.heading(col, text=col)
-
+#======== Action
     def moveUpSelectedElement(self) -> None:
         rows = self.tree.selection()
         for row in rows:
@@ -389,5 +466,41 @@ class Treeview_up(ttk.Frame, Widget_up, UpdateWidget):
         for row in rows:
             self.tree.move(row, self.tree.parent(row), self.tree.index(row)+1)
 
+#======== Is
     def isSelect(self) -> bool:
         return self.tree.selection().__len__() > 0
+
+class _EntryPopup(Entry_up):
+
+    tv: Treeview_up
+
+    def __init__(self, parent, iid, value, colum, **kw):
+        ''' If relwidth is set, then width is ignored '''
+        super().__init__(parent, **kw)
+        self.tv = parent
+        self.iid = iid
+        self.col = colum
+
+        self.insert(0, value if value is not None else "")
+        # self['state'] = 'readonly'
+        # self['readonlybackground'] = 'white'
+        # self['selectbackground'] = '#1BA1E2'
+        self['exportselection'] = False
+
+        self.focus_force()
+        self.bind("<Return>", self.on_return)
+        self.bind("<Control-a>", self.select_all)
+        self.bind("<Escape>", lambda *ignore: self.destroy())
+        self.bind("<FocusOut>", lambda *ignore: self.destroy())
+
+    def on_return(self, event):
+        t = self.get()
+        self.tv.editValueColRow(t, self.col, self.iid)
+        self.destroy()
+
+    def select_all(self, *ignore):
+        ''' Set selection on the whole text '''
+        self.selection_range(0, 'end')
+
+        # returns 'break' to interrupt default key-bindings
+        return 'break'

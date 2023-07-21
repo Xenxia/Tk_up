@@ -1,45 +1,39 @@
 from tkinter import *
 
-from tk_up.widgets.text import Terminal_ScrolledText_up
-from tk_up.widgets.button import Checkbutton_up
+from tk_up.widgets.treeview import Treeview_up
+from tk_up.widgets import SCROLL_ALL
 from threading import Thread
 from time import sleep
 
 root = Tk()
-root.geometry("400x300")
+root.geometry("700x600")
 
 
-def delete_text():
-    for i in range(10):
-        sleep(0.1)
-        Tbox.printSameLine("t", "test :"+str(i))
-
-def delete_text2():
-    for i in range(5):
-        sleep(1)
-        Tbox.printSameLine("t2", "test :"+str(i))
-    
-    Tbox.deleteId_Index("t2")
-
-Tbox = Terminal_ScrolledText_up(root, width=40, height=10)
-Tbox.pack()
-
-Tbox.printLastLine("test")
-Tbox.printLastLine("test")
-Tbox.printLastLine("test")
-Tbox.printLastLine("test")
-
-
-# Tbox.write("write\n")
-
+treeView = Treeview_up(root, scroll=SCROLL_ALL, iid=False, child=True, show="tree headings", editRow=True, width=700, height=300)
+# treeView.bind("<ButtonRelease-1>", self.selected)
+treeView.gridPosSize(row=2, column=0, sticky=(E, W, S, N)).show()
+treeView.setColumns(
+    columns=[
+        'UI.EDIT_MENU.col_name_profil',
+        'UI.EDIT_MENU.col_folder',
+        'UI.EDIT_MENU.col_extention'
+    ], 
+    size=[200, 150, 300]
+)
+treeView.setTags((
+    {
+    "name": "Disable",
+    "fg": "#F70000",
+    },
+    {
+    "name": "SysDisable",
+    "bg": "#AA0000",
+    },
+))
 
 
-
-Button(root, text="test", command=lambda: Thread(target=delete_text).start()).pack()
-Button(root, text="test2", command=lambda: Thread(target=delete_text2).start()).pack()
-Button(root, text="delete", command=lambda: Tbox.delete("2.0", "3.0")).pack()
-Button(root, text="insert", command=lambda: Tbox.printLastLine("test")).pack()
-Button(root, text="index", command=lambda: print(Tbox.index("end linestart"))).pack()
-Checkbutton_up(root).pack()
+treeView.addElement(values=["test","", "test"])
+treeView.addElement(values=["test2","", "test"])
+treeView.addElement(parent="1", values=["test","tets2"])
 
 root.mainloop()
