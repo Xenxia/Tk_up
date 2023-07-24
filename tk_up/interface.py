@@ -1,9 +1,13 @@
-from tk_up.widgets.frame import Frame_up
 from typing import Any
+
+from tk_up.widgets.frame import Frame_up
+from tk_up.managerWidgets import ManagerWidgets_up
 
 class ManagedFrame(Frame_up):
 
     ctx: dict[str, Any]
+    wManager: ManagerWidgets_up
+
 
     # this function is call if you hide widget
     def disable(self) -> None: ...

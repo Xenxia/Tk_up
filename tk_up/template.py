@@ -7,11 +7,11 @@ class TEMPLATE_NAME_WIDGET(Frame_up):
 
     # DONT REMOVE THIS
     ctx: dict[str, Any]
-    manager_class: ManagerWidgets_up
+    wManager: ManagerWidgets_up
 
-    def __init__(self, context: dict, manager_class: ManagerWidgets_up, master, kw={"width":0, "height":0}):
+    def __init__(self, context: dict, wManager: ManagerWidgets_up, master, kw={"width":0, "height":0}):
         self.ctx = context.copy()
-        self.manager_class = manager_class
+        self.wManager = wManager
 
         # Use 'self' in your widget
         Frame_up.__init__(self, master=master, width=kw["width"], height=kw["height"])

@@ -24,7 +24,7 @@ class ManagerWidgets_up(Frame_up):
                 #import page
                 import_page = importlib.import_module(str(file_without_extension))
                 #load class and give context
-                class_p = import_page.__getattribute__(file_without_extension)(context = context, manager_class=self, master=self, kw=kw)
+                class_p = import_page.__getattribute__(file_without_extension)(context=context, wManager=self, master=self, kw=kw)
                 class_p.hide()
 
                 self.class_widget[file_without_extension] = class_p
