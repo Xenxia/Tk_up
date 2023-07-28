@@ -1,3 +1,4 @@
+from time import sleep
 import tkinter
 from typing import Any, Literal, Tuple
 from tkinter import ttk
@@ -20,7 +21,7 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
     scroll_y: ttk.Scrollbar
     scroll_x: ttk.Scrollbar
 
-    def __init__(self, master=None, scroll:Scroll=None, child:bool=False, selectmode="browse", indent=10, resizeColumn=True, editRow=False, **kw) -> "_BaseTreeView":
+    def __init__(self, master=None, scroll:Scroll=None, child:bool=False, selectmode: Literal['extended', 'browse', 'none']="browse", indent: int=10, resizeColumn: bool=True, editRow: bool=False, **kw) -> "_BaseTreeView":
 
         ttk.Frame.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
@@ -85,8 +86,8 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
 
     def __getSubChildren(self, iid="") -> list | Any:
         children: list = []
-        list_children = self.tree.get_children(iid)
-        for child in list_children:
+        childs = self.tree.get_children(iid)
+        for child in childs:
             children.append(child)
             children += self.__getSubChildren(child)
         return children
@@ -170,6 +171,284 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
             except:
                 pass
 
+#======== Add
+    def addItems(self, Items:dict[str, PItemDict]=None) -> bool:
+
+        temp: PItemDict = {}
+
+        while True:
+            
+            if len(Items) == 0:
+                Items = temp
+                temp = {}
+            
+            if (len(Items) + len(temp)) == 0:
+                return True
+
+            while len(Items) != 0:
+                
+                item: tuple[str, PItemDict]; Items: PItemDict
+                item, Items = self.__popItem(Items)
+
+                if item[1]["parent"] not in Items:
+                    
+                    iid: str = item[0]
+                    parent: str = str(item[1]["parent"]) if item[1]["parent"] is not None else ""
+                    
+                    # Try Key values
+                    try:
+                        values: list | Tuple = item[1]["values"]
+                    except KeyError:
+                        print("values key")
+                    # Try Key text
+                    try:
+                        text: str = item[1]["text"]
+                    except KeyError:
+                        text = ""
+
+                    # Try Key image
+                    try: 
+                        image: Any = item[1]["image"] 
+                    except KeyError: 
+                        image = ""
+
+                    # Try Key open
+                    try:
+                        open: bool = item[1]["open"]
+                    except KeyError:
+                        open = False
+
+                    # Try Key tags
+                    try:
+                        tags: str = item[1]["tags"]
+                    except KeyError:
+                        tags = ""
+
+                    if self._child:
+                        text = values.pop(0)
+
+                    try:
+                        self.tree.insert(
+                                parent=parent, 
+                                index=END,
+                                iid=iid,
+                                text=text, 
+                                values=values, 
+                                tags=tags, 
+                                image=image, 
+                                open=open
+                            )
+                    except tkinter.TclError:
+                        return False
+
+                    self._count += 1
+                else:
+                    temp[item[0]] = item[1]
+
+    def addItem(self, parent:str="", index:int|Literal['end']=END, iid:str=None, image="", values:list=[], open:bool=False, tags:str|list[str]|Tuple[str, ...]="") -> tuple[bool, str] | tkinter.TclError:
+        if iid is None:
+            iid = self._count
+
+        if self._child:
+            text=values.pop(0)
+        else:
+            text=""
+
+        try:
+            self.tree.insert(parent=parent, index=index, iid=iid, text=text, image=image, values=values, open=open, tags=tags)
+            self._count += 1
+        except tkinter.TclError as error:
+            return (False, "")
+
+        return (True, iid)
+
+    def addEmptyRow(self) -> None:
+        iid = self.addItem()[1]
+
+        self.tree.yview_scroll(self._count, "units")
+        self.tree.see(iid)
+
+
+        col = ("#0", 0) if self._child else ("#1", 1)
+
+        x,y,width,height = self.tree.bbox(iid, col[0])
+
+        
+        # y-axis offset
+        # pady = height // 2
+        pady = 0
+
+        # place Entry popup properly
+        # text = self.getValueSelectedColRow()
+        self.entryPopup = _EntryPopup(self, iid, "", col[1])
+        self.entryPopup.place(x=x, y=y+pady, width=width, height=height)
+
+
+#======== Remove
+    def removeAllItems(self):
+        for record in self.tree.get_children():
+            self.tree.delete(record)
+
+    def removeSelectedItem(self):
+        items = self.tree.selection()
+        for item in items:
+            self.tree.delete(item)
+
+    def removeItem(self, iid: str):
+        self.tree.delete(iid)
+
+#======== Edit
+    def editSelectedItem(self, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
+        item = self.tree.focus()
+        
+        self.editItem(item, image, values, open, tags)
+
+    def editItem(self, iid:str, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
+        if self._child:
+            self.tree.item(iid, text=values.pop(0))
+        
+        if image != None:
+            self.tree.item(iid, image=image)
+
+        if values != None:
+            self.tree.item(iid, values=values)
+
+        if open:
+            self.tree.item(iid, open=open)
+
+        if tags != None:
+            self.tree.item(iid, tags=tags)
+
+        if self.isEmptyRow(iid):
+            self.removeItem(iid)
+
+    def editValueColRow(self, value: Any, column: int, rowId: str) -> None:
+
+            t: list = self.getItem(rowId)["values"]
+            if len(t) == 0:
+                t = []
+                t.append(value)
+            else:
+                if (column-1) == 0:
+                    try:
+                        t[0] = value
+                    except IndexError:
+                        t.append(value)
+                else:
+                    try:
+                        t[(column-1)] = value
+                    except IndexError:
+                        t.append(value)
+
+            self.editItem(rowId, values=t)
+
+#======== Getter
+    def getItemSelectedRow(self, option:str='values') -> Any:
+        item = self.tree.focus()
+
+        if len(self.tree.item(item, option)) == 0:
+            return (None,)
+
+        if self._child and option == "values":
+            listValues: list = []
+            listValues.append(self.tree.item(item, "text"))
+            for value in self.tree.item(item, "values"):
+                listValues.append(value)
+
+            return listValues
+
+        return self.tree.item(item, option)
+
+    def getValueSelectedColRow(self, option: str = "values") -> Any:
+        columnId = self._column[1]
+
+        if not self._child: columnId = columnId-1
+
+        v = self.getItemSelectedRow(option=option)
+
+        for i, val in enumerate(v):
+            if i == columnId:
+                return val
+
+    def getSelectedRow(self) -> tuple:
+        return self.tree.selection()
+
+    def getItems(self) -> dict[str, PItemDict]:
+        childsIidList = self.__getSubChildren()
+
+        children: dict[str, PItemDict] = {}
+
+        for iid in childsIidList:
+
+            temp: PItemDict = {}
+
+            item: ItemDict = self.tree.item(iid)
+
+            temp["values"] = item["values"]
+            temp["text"] = item["text"]
+            temp["image"] = item["image"]
+            temp["open"] = item["open"]
+            temp["tags"] = item["tags"]
+            temp["parent"] = None
+
+            parentIID = self.tree.parent(iid)
+
+            if parentIID != "":
+                temp["parent"] = parentIID
+            
+            children[iid] = temp
+        
+        return children
+
+    def getParentsIID(self, iid: str) -> list[str]:
+
+        parentList = []
+
+        while iid != '':
+            parentList.append(iid)
+            iid = self.tree.parent(iid)
+        return parentList
+
+    def getItem(self, iid: str) -> ItemDict:
+        return self.tree.item(iid)
+
+#======== Action
+    def moveUpSelectedItem(self) -> None:
+        rows = self.tree.selection()
+        for row in rows:
+            self.tree.move(row, self.tree.parent(row), self.tree.index(row)-1)
+
+    def moveDownSelectedItem(self) -> None:
+        rows = self.tree.selection()
+        for row in rows:
+            self.tree.move(row, self.tree.parent(row), self.tree.index(row)+1)
+
+#======== Is
+    def isSelect(self) -> bool:
+        return self.tree.selection().__len__() > 0
+
+    def isEmptyRow(self, iid: str) -> bool:
+
+        i = self.getItem(iid)
+
+        v = len("".join(i["values"]))
+        t = len(i["text"])
+
+        if v+t == 0:
+            return True
+
+        return False
+
+#=======================================================================================================================================================
+
+class Treeview_up(_BaseTreeView):
+
+    def __init__(self, master=None, scroll:Scroll=None, child:bool=False, selectmode: Literal['extended', 'browse', 'none']="browse", indent: int=10, resizeColumn: bool=True, editRow: bool=False, **kw) -> "Treeview_up":
+
+        _BaseTreeView.__init__(self, master=master, scroll=scroll, child=child, selectmode=selectmode, indent=indent, resizeColumn=resizeColumn, editRow=editRow, **kw)
+
+        self.tree.configure(show="tree headings")
+
     def setColumns(self, columns: list[str], anchor: list[str] = None, stretch: list[bool] = None, minSize: list[int] = None, size: list[int] = None) -> None:
 
         if self._child:
@@ -222,296 +501,12 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
 
             self.tree.heading(col, text=col)
 
-#======== Add
-    def addItems(self, data:dict[PItemDict]=None) -> bool:
-
-        temp: PItemDict = {}
-
-        while True:
-            
-            if len(data) == 0:
-                data = temp
-                temp = {}
-            
-            if (len(data) + len(temp)) == 0:
-                return True
-
-            while len(data) != 0:
-                
-                child: tuple[str, PItemDict]; data: PItemDict
-                child, data = self.__popItem(data)
-
-                if child[1]["parent"] not in data:
-                    
-                    iid: str = child[0]
-                    parent: str = str(child[1]["parent"]) if child[1]["parent"] is not None else ""
-                    
-                    # Try Key values
-                    try:
-                        values: list | Tuple = child[1]["values"]
-                    except KeyError:
-                        print("values key")
-                    # Try Key text
-                    try:
-                        text: str = child[1]["text"]
-                    except KeyError:
-                        text = ""
-
-                    # Try Key image
-                    try: 
-                        image: Any = child[1]["image"] 
-                    except KeyError: 
-                        image = ""
-
-                    # Try Key open
-                    try:
-                        open: bool = child[1]["open"]
-                    except KeyError:
-                        open = False
-
-                    # Try Key tags
-                    try:
-                        tags: str = child[1]["tags"]
-                    except KeyError:
-                        tags = ""
-
-                    if self._child:
-                        text = values.pop(0)
-
-                    try:
-                        self.tree.insert(
-                                parent=parent, 
-                                index=END,
-                                iid=iid,
-                                text=text, 
-                                values=values, 
-                                tags=tags, 
-                                image=image, 
-                                open=open
-                            )
-                    except tkinter.TclError:
-                        return False
-
-                    self._count += 1
-                else:
-                    temp[child[0]] = child[1]
-
-    def addItem(self, parent:str="", index:int|Literal['end']=END, iid:str=None, text:str="", image="", values:list=[], open:bool=False, tags:str|list[str]|Tuple[str, ...]="") -> tuple[bool, str] | tkinter.TclError:
-        if iid is None:
-            iid = self._count
-
-        if self._child:
-            text=values.pop(0)
-
-        try:
-            self.tree.insert(parent=parent, index=index, iid=iid, text=text, image=image, values=values, open=open, tags=tags)
-            self._count += 1
-        except tkinter.TclError as error:
-            return error
-        return (True, iid)
-
-    def addEmptyRow(self) -> None:
-        iid = self.addItem()[1]
-        self._count += 1
-        col = ("#0", 0) if self._child else ("#1", 1)
-        x,y,width,height = self.tree.bbox(iid, col[0])
-
-        
-        # y-axis offset
-        # pady = height // 2
-        pady = 0
-
-        # place Entry popup properly
-        # text = self.getValueSelectedColRow()
-        self.entryPopup = _EntryPopup(self, iid, "", col[1])
-        self.entryPopup.place(x=x, y=y+pady, width=width, height=height)
-
-
-#======== Remove
-    def removeAllItems(self):
-        for record in self.tree.get_children():
-            self.tree.delete(record)
-
-    def removeSelectedItem(self):
-        item = self.tree.selection()[0]
-        self.tree.delete(item)
-
-    def removeItem(self, iid: str):
-        self.tree.delete(iid)
-
-#======== Edit
-    def editSelectedItem(self, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
-        item = self.tree.focus()
-        
-        self.editItem(item, text, image, values, open, tags)
-
-    def editItem(self, iid:str, text:str=None, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
-        if text != None:
-            self.tree.item(iid, text=text)
-        
-        if image != None:
-            self.tree.item(iid, image=image)
-
-        if values != None:
-            self.tree.item(iid, values=values)
-
-        if open:
-            self.tree.item(iid, open=open)
-
-        if tags != None:
-            self.tree.item(iid, tags=tags)
-
-        if self.isEmptyRow(iid):
-            self.removeItem(iid)
-
-    def editValueColRow(self, value: Any, column: int, rowId: str) -> None:
-
-        if self._child:
-            if column == 0:
-                self.editItem(rowId, text=value)
-            else:
-                t: list = self.getItem(rowId)["values"]
-
-                if len(t) == 0:
-                    t = []
-                
-                try:
-                    t[(column-1)] = value
-                except IndexError:
-                    t.append(value)
-
-                self.editItem(rowId, values=t)
-
-        else:
-            t: list = self.getItem(rowId)["values"]
-            if len(t) == 0:
-                t = []
-
-            if (column-1) == 0:
-                try:
-                    t[0] = value
-                except IndexError:
-                    t.append(value)
-            else:
-                try:
-                    t[(column-1)] = value
-                except IndexError:
-                    t.append(value)
-            self.editItem(rowId, values=t)
-
-#======== Getter
-    def getItemSelectedRow(self, option:str='values') -> Any:
-        item = self.tree.focus()
-
-        if len(self.tree.item(item, option)) == 0:
-            return (None,)
-
-        if self._child and option == "values":
-            listValues: list = []
-            listValues.append(self.tree.item(item, "text"))
-            for value in self.tree.item(item, "values"):
-                listValues.append(value)
-
-            return listValues
-
-        return self.tree.item(item, option)
-
-    def getValueSelectedColRow(self, option: str = "values") -> Any:
-        columnId = self._column[1]
-
-        if not self._child: columnId = columnId-1
-
-        v = self.getItemSelectedRow(option=option)
-
-        for i, val in enumerate(v):
-            if i == columnId:
-                return val
-
-    def getSelectedRow(self) -> tuple:
-        return self.tree.selection()
-
-    def getAllChildren(self) -> dict[PItemDict]:
-        childs_list = self.__getSubChildren()
-
-        children_dict = {}
-
-        for iid in childs_list:
-
-            temp_dict = {}
-
-            item = self.tree.item(iid)
-
-            temp_dict["values"] = item["values"]
-            temp_dict["text"] = item["text"]
-            temp_dict["image"] = item["image"]
-            temp_dict["open"] = item["open"]
-            temp_dict["tags"] = item["tags"]
-            temp_dict["parent"] = None
-
-            parentIID = self.tree.parent(iid)
-
-            if parentIID != "":
-                temp_dict["parent"] = parentIID
-            
-            children_dict[iid] = (temp_dict)
-        
-        return children_dict
-
-    def getAllParentItem(self, iidParent: str) -> list[str]:
-
-        parentList = []
-
-        while iidParent != '':
-            parentList.append(iidParent)
-            iidParent = self.tree.parent(iidParent)
-        return parentList
-
-    def getItem(self, iid: str) -> ItemDict:
-        return self.tree.item(iid)
-
-#======== Action
-    def moveUpSelectedItem(self) -> None:
-        rows = self.tree.selection()
-        for row in rows:
-            self.tree.move(row, self.tree.parent(row), self.tree.index(row)-1)
-
-    def moveDownSelectedItem(self) -> None:
-        rows = self.tree.selection()
-        for row in rows:
-            self.tree.move(row, self.tree.parent(row), self.tree.index(row)+1)
-
-#======== Is
-    def isSelect(self) -> bool:
-        return self.tree.selection().__len__() > 0
-
-    def isEmptyRow(self, iid: str) -> bool:
-
-        i = self.getItem(iid)
-
-        v = len("".join(i["values"]))
-        t = len(i["text"])
-
-        if v+t == 0:
-            return True
-
-        return False
-
-#=======================================================================================================================================================
-
-class Treeview_up(_BaseTreeView):
-
-    def __init__(self, master=None, scroll:Scroll=None, child:bool=False, selectmode="browse", indent=10, resizeColumn=True, editRow=False, **kw) -> "Treeview_up":
-
-        _BaseTreeView.__init__(self, master=master, scroll=scroll, child=child, selectmode=selectmode, indent=indent, resizeColumn=resizeColumn, editRow=editRow, **kw)
-
-        self.tree.configure(show="tree headings")
-
 
 #=======================================================================================================================================================
 
 class Listview_up(_BaseTreeView):
 
-    def __init__(self, master=None, scroll:Scroll=None, child:bool=False, selectmode="browse", indent=10, editRow=False, **kw) -> "Listview_up":
+    def __init__(self, master=None, scroll:Scroll=None, child:bool=False, selectmode: Literal['extended', 'browse', 'none']="browse", indent: int=10, editRow: bool=False, **kw) -> "Listview_up":
 
         _BaseTreeView.__init__(self, master=master, scroll=scroll, child=child, selectmode=selectmode, indent=indent, resizeColumn=False, editRow=editRow, **kw)
 
@@ -534,8 +529,6 @@ class Listview_up(_BaseTreeView):
                 for i, col in enumerate(self.tree["column"]):
                     self.tree.column(col, width=size[i])
 
-    def setColumns(self, columns: list[str], anchor: list[str] = None, stretch: list[bool] = None, minSize: list[int] = None, size: list[int] = None) -> None:
-        return
 
 class _EntryPopup(Entry_up):
 
