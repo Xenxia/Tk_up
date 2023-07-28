@@ -1,11 +1,15 @@
 from typing import Any
 
 from tk_up.widgets.frame import Frame_up
-from tk_up.managerWidgets import ManagerWidgets_up
+
+
+class ManagerWidgets_up: ...
 
 class ManagedFrame(Frame_up):
 
     ctx: dict[str, Any]
+
+
     wManager: ManagerWidgets_up
 
 
