@@ -63,6 +63,8 @@ treeView2.addItems({"test":{
     "values": ["test", "2", "g"]
 }})
 
+print(treeView2.getItem("0"))
+
 b = Button_up(root, text="Add Row", command=treeView.addEmptyRow).gridPosSize(row=0, column=0).show()
 
 

@@ -36,7 +36,8 @@ if cli_args.C == None:
     sys.exit("\nOne argument expected")
 
 path_exe = os.getcwd()
-path_tempalte = f"{os.path.dirname(os.path.realpath(__file__))}/template.py"
+pathTemplatePage = f"{os.path.dirname(os.path.realpath(__file__))}/TEMPLATE_FOLDER/TEMPLATE_PAGE.py"
+pathTemplateLogic_Page = f"{os.path.dirname(os.path.realpath(__file__))}/TEMPLATE_FOLDER/TEMPLATE_LOGIC_PAGE.py"
 
 def init_project():
     pass
@@ -46,13 +47,32 @@ def add_page(name:str):
     name = name.lower()
     template: str
 
-    with open(f"{path_tempalte}", "r") as file:
+    ### Page
+
+    with open(f"{pathTemplatePage}", "r") as file:
         template = file.read()
         file.close()
 
-    template = template.replace("TEMPLATE_NAME_WIDGET", name)
+    template = template.replace("TEMPLATE_PAGE", name)
 
     with open(f"{name}.py", "a") as file:
+        file.write(template)
+        file.close()
+
+    ### Logic
+
+    if not os.path.exists("./logic"):
+        os.mkdir("logic")
+
+
+    with open(f"{pathTemplateLogic_Page}", "r") as file:
+        template = file.read()
+        file.close()
+
+    template = template.replace("TEMPLATE_PAGE", name)
+    template = template.replace("TEMPLATE_FOLDER", path_exe.split(os.sep)[-1])
+
+    with open(f"logic/{name}.py", "a") as file:
         file.write(template)
         file.close()
 

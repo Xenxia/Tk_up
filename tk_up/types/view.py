@@ -2,7 +2,6 @@ from typing import TypedDict, Any, Literal
 
 
 class ItemDict(TypedDict):
-    text: str
     image: list[str] | Literal[""]  # no idea why it's wrapped in list
     values: list[Any] | Literal[""]
     open: bool  # actually 0 or 1
@@ -10,7 +9,6 @@ class ItemDict(TypedDict):
 
 class PItemDict(TypedDict):
     parent: str
-    text: str
     image: list[str] | Literal[""]  # no idea why it's wrapped in list
     values: list[Any] | Literal[""]
     open: bool  # actually 0 or 1

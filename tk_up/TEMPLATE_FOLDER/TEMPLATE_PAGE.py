@@ -3,7 +3,7 @@ from typing import Any
 from tk_up.widgets.frame import Frame_up
 from tk_up.managerWidgets import ManagerWidgets_up
 
-class TEMPLATE_NAME_WIDGET(Frame_up):
+class TEMPLATE_PAGE(Frame_up):
 
     # DONT REMOVE THIS
     ctx: dict[str, Any]

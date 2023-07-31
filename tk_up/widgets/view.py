@@ -121,8 +121,8 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
             text = self.getValueSelectedColRow()
             self.entryPopup = _EntryPopup(self, rowid, text, self._column[1])
             self.entryPopup.place(x=x, y=y+pady, width=width, height=height)
-        except:
-            pass
+        except ValueError as e:
+            print(e)
 
     def bind(self, sequence:str|None= None, func=None, add:bool|Literal['', '+']|None=None) -> None:
         self.tree.bind(sequence=sequence, func=func, add=add)
@@ -304,7 +304,7 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
         self.editItem(item, image, values, open, tags)
 
     def editItem(self, iid:str, image=None, values:list|Literal['']=None, open:bool=False, tags:str|list[str]|tuple[str, ...]=None) -> None:
-        if self._child:
+        if self._child and values is not None:
             self.tree.item(iid, text=values.pop(0))
         
         if image != None:
@@ -325,46 +325,36 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
     def editValueColRow(self, value: Any, column: int, rowId: str) -> None:
 
             t: list = self.getItem(rowId)["values"]
+
             if len(t) == 0:
                 t = []
                 t.append(value)
             else:
-                if (column-1) == 0:
+                if self._child:
                     try:
-                        t[0] = value
-                    except IndexError:
+                        t[column] = value
+                    except:
                         t.append(value)
                 else:
                     try:
-                        t[(column-1)] = value
-                    except IndexError:
+                        t[column-1] = value
+                    except:
                         t.append(value)
 
             self.editItem(rowId, values=t)
 
 #======== Getter
-    def getItemSelectedRow(self, option:str='values') -> Any:
-        item = self.tree.focus()
+    def getItemSelectedRow(self) -> ItemDict:
+        iid = self.tree.selection()[0]
 
-        if len(self.tree.item(item, option)) == 0:
-            return (None,)
+        return self.getItem(iid)
 
-        if self._child and option == "values":
-            listValues: list = []
-            listValues.append(self.tree.item(item, "text"))
-            for value in self.tree.item(item, "values"):
-                listValues.append(value)
-
-            return listValues
-
-        return self.tree.item(item, option)
-
-    def getValueSelectedColRow(self, option: str = "values") -> Any:
+    def getValueSelectedColRow(self) -> Any:
         columnId = self._column[1]
 
         if not self._child: columnId = columnId-1
 
-        v = self.getItemSelectedRow(option=option)
+        v = self.getItemSelectedRow()["values"]
 
         for i, val in enumerate(v):
             if i == columnId:
@@ -382,10 +372,9 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
 
             temp: PItemDict = {}
 
-            item: ItemDict = self.tree.item(iid)
+            item: ItemDict = self.getItem(iid)
 
             temp["values"] = item["values"]
-            temp["text"] = item["text"]
             temp["image"] = item["image"]
             temp["open"] = item["open"]
             temp["tags"] = item["tags"]
@@ -410,7 +399,23 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
         return parentList
 
     def getItem(self, iid: str) -> ItemDict:
-        return self.tree.item(iid)
+
+        item = self.tree.item(iid)
+
+        newItem: ItemDict = {}
+
+        if self._child:
+            t: list = item["values"]
+            t.insert(0, item["text"])
+        else:
+            t = item["values"]
+
+        newItem["values"] = t
+        newItem["image"] = item["image"]
+        newItem["open"] = item["open"]
+        newItem["tags"] = item["tags"]
+
+        return newItem
 
 #======== Action
     def moveUpSelectedItem(self) -> None:
@@ -432,9 +437,8 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
         i = self.getItem(iid)
 
         v = len("".join(i["values"]))
-        t = len(i["text"])
 
-        if v+t == 0:
+        if v == 0:
             return True
 
         return False
@@ -550,12 +554,17 @@ class _EntryPopup(Entry_up):
         self.focus_force()
         self.bind("<Return>", self.on_return)
         self.bind("<Control-a>", self.select_all)
-        self.bind("<Escape>", self.destroyCheck)
-        self.bind("<FocusOut>", self.destroyCheck)
+        self.bind("<Escape>", self.on_escape)
+        self.bind("<FocusOut>", self.on_return)
 
     def on_return(self, event) -> None:
+
         t = self.get()
         self.tv.editValueColRow(t, self.col, self.iid)
+        self.destroy()
+
+    def on_escape(self, event) -> None:
+        self.check()
         self.destroy()
 
     def select_all(self, *ignore) -> Literal["break"]:
@@ -565,9 +574,7 @@ class _EntryPopup(Entry_up):
         # returns 'break' to interrupt default key-bindings
         return 'break'
 
-    def destroyCheck(self, *ignore) -> None:
+    def check(self, *ignore) -> None:
 
         if self.tv.isEmptyRow(self.iid):
             self.tv.removeItem(self.iid)
-
-        self.destroy()
