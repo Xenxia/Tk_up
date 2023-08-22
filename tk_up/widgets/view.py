@@ -1,4 +1,3 @@
-from time import sleep
 import tkinter
 from typing import Any, Literal, Tuple
 from tkinter import ttk
@@ -17,6 +16,7 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
     _editRow: bool
     _resizeCol: bool
     _column: list[str, int]
+    _image: dict
     tree: ttk.Treeview
     scroll_y: ttk.Scrollbar
     scroll_x: ttk.Scrollbar
@@ -31,6 +31,7 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
         self._child=child
         self._editRow=editRow
         self._resizeCol = resizeColumn
+        self._image = {}
 
         self.tree = ttk.Treeview(
             master=self,
@@ -255,7 +256,9 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
             text=""
 
         try:
-            self.tree.insert(parent=parent, index=index, iid=iid, text=text, image=image, values=values, open=open, tags=tags)
+            self._image[str(iid)] = image
+            self.tree.insert(parent=parent, index=index, iid=iid, text=text, image=self._image[str(iid)], values=values, open=open, tags=tags)
+            
             self._count += 1
         except tkinter.TclError as error:
             return (False, "")
@@ -308,7 +311,8 @@ class _BaseTreeView(ttk.Frame, Widget_up, UpdateWidget):
             self.tree.item(iid, text=values.pop(0))
         
         if image != None:
-            self.tree.item(iid, image=image)
+            self._image[str(iid)] = image
+            self.tree.item(iid, image=self._image[str(iid)])
 
         if values != None:
             self.tree.item(iid, values=values)

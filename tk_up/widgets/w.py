@@ -1,5 +1,6 @@
 from tkinter import ttk, Misc
-from typing import Literal, Callable, Any
+from tkinter.constants import DISABLED, NORMAL
+from typing import Literal
 
 from tk_up.types import FuncsUpdate
 
@@ -215,3 +216,16 @@ class UpdateWidget(ttk.Widget):
 
     def updateRoot(self):
         self.rootWidget.update()
+
+class StateWidget(ttk.Widget):
+
+    def __init__(self):
+        pass
+
+    def disable(self):
+        self['state'] = DISABLED
+
+    def enable(self):
+        self['state'] = NORMAL
+
+

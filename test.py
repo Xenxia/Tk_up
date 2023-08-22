@@ -3,9 +3,16 @@ from tkinter import *
 from tk_up.widgets.view import Listview_up, Treeview_up
 from tk_up.widgets.button import Button_up
 
+from PIL import Image, ImageDraw, ImageTk
 from tk_up.enum import Scroll
 from threading import Thread
 from time import sleep
+
+def dot(size: tuple[int, int], color: str = "#ffffff") -> ImageTk.PhotoImage:
+    i = Image.new(mode="RGBA", size=(size[0]+5, size[1]+1))
+    d = ImageDraw.Draw(i)
+    d.ellipse((0, 0, size[0], size[1]), fill=color, width=0.5)
+    return ImageTk.PhotoImage(i)
 
 root = Tk()
 root.geometry("700x600")
@@ -26,10 +33,12 @@ treeView.setTags((
     },
 ))
 
+i = dot((11, 11), "#FF00FF")
 
-treeView.addItem(values=["test1", "test2", "test3"])
-treeView.addItem(values=["test2","", "test"])
-treeView.addItem(parent="1", values=["test","tets2"])
+
+treeView.addItem(values=["test1", "test2", "test3"], image=i)
+treeView.addItem(values=["test2","", "test"], image=i)
+treeView.addItem(parent="1", values=["test","tets2"], image=i)
 treeView.addItems({"test":{
     "parent": "1",
     "values": ["test", "2", "g"]
@@ -55,7 +64,7 @@ treeView2.setTags((
 ))
 
 
-treeView2.addItem(values=["test1", "test2", "test3"])
+treeView2.addItem(values=["test1", "test2", "test3"], image=i)
 treeView2.addItem(values=["test2","", "test"])
 treeView2.addItem(parent="1", values=["test","tets2"])
 treeView2.addItems({"test":{

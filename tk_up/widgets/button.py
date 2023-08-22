@@ -1,20 +1,20 @@
 
 from tkinter import ttk, StringVar
-from tkinter.constants import DISABLED, NORMAL
 from typing import Any, Tuple
 from PIL import Image, ImageTk
 
-from tk_up.widgets.w import Widget_up, UpdateWidget
+from tk_up.widgets.w import Widget_up, UpdateWidget, StateWidget
 from tk_up.types import ImageToggle
 from tk_up.object.image import Wimage
 
-class Button_up(ttk.Button, Widget_up, UpdateWidget):
+class Button_up(ttk.Button, Widget_up, UpdateWidget, StateWidget):
 
     def __init__(self, master=None, images: list[Wimage]=None, image: Wimage=None, **kw):
 
         ttk.Button.__init__(self, master=master, **kw)
         Widget_up.__init__(self)
         UpdateWidget.__init__(self)
+        StateWidget.__init__(self)
 
         self.images = [None]
         self.image = None
@@ -38,12 +38,6 @@ class Button_up(ttk.Button, Widget_up, UpdateWidget):
                 break
 
         self.update()
-
-    def disable(self):
-        self['state'] = DISABLED
-
-    def enable(self):
-        self['state'] = NORMAL
 
 class Toggle_Button_up(Button_up):
 
@@ -135,7 +129,7 @@ class Toggle_Button_up(Button_up):
 
         self.update()
 
-class Checkbutton_up(ttk.Checkbutton, Widget_up, UpdateWidget):
+class Checkbutton_up(ttk.Checkbutton, Widget_up, UpdateWidget, StateWidget):
 
     variable: StringVar
 
@@ -145,12 +139,7 @@ class Checkbutton_up(ttk.Checkbutton, Widget_up, UpdateWidget):
         ttk.Checkbutton.__init__(self, master=master, variable=self.variable, onvalue=1, offvalue=0, **kw)
         Widget_up.__init__(self)
         UpdateWidget.__init__(self)
-
-    def disable(self):
-        self['state'] = DISABLED
-
-    def enable(self):
-        self['state'] = NORMAL
+        StateWidget.__init__(self)
 
     def get(self):
         return self.variable
